@@ -86,7 +86,7 @@ implementations like [Datomic's own][1] or [DataScript][2].
 ;;=> ([0 :age] [1 :age])
      
 (reduce #(update-in %1 %2 inc) pets age-paths)
-;;=> a map in which George and Francis are now 4 and 9, respectively.
+;;=> A vector of maps in which George and Francis are now 4 and 9, respectively.
 ```
 
 ## Theory of operation

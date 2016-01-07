@@ -9,10 +9,9 @@
 Clojure makes it easy and efficient to create, update, and access places within
 immutable, nested associative structures like maps-of-maps or vectors-of-maps.
 
-However, Clojure doesn't help much with **querying** these structures,
-particularly when there are relationships across elements within the structure.
-As a result, programmers are often compelled to implement bespoke query engines
-and DSLs on a per-application basis.
+However, I haven't found in Clojure satisfying means of *querying* these
+structures.  As a result, I have been compelled in the past to implement bespoke
+query engines and DSLs on a per-application basis.
 
 This library contains a set of functions for converting associative structures
 to in-memory databases suitable for query via Datomic-flavored [Datalog][0]
@@ -38,8 +37,8 @@ implementations like [Datomic's own][1] or [DataScript][2].
     :age 1
     :owners ["Peirce"]}])
     
-;; Create a set of relations based on paths into the pets map. Every relation
-;; contains the path, followed by the value at that path.
+;; Create a set of relations based on paths into the pets map. Every relation is
+;; a path followed by the value at that path.
 
 (def pets-db (make-db pets))
 
@@ -51,23 +50,23 @@ implementations like [Datomic's own][1] or [DataScript][2].
    pets-db)
 ;;=> #{["George"] ["Francis"] ["Bob"]}
 
-;; To find each owner and how many pets each owner owns, we could write Clojure code like this:
+;; To find each owner and how many pets each owner owns, we might write Clojure code like this:
 
-(reduce
-  (fn [m pet]
-     (reduce #(update %1 %2 (fnil + 0) 1) m (get pet :owners)))
-  {}
-  pets)
+(->> (for [p pets, o (:owners p)] {o 1})
+     (apply merge-with +))
 ;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
 
-;; I find that code hard to follow, which is why I made this library. Here's how
-;; I would prefer to do it, with Datalog:
+;; It's pretty short for this example, but I find this kind of code gets hard to
+;; follow, particularly with deeper structures. I find queries involving joins
+;; and filters especially difficult to express adequately in this way. Here's
+;; how I would prefer to do it, with Datalog:
 
-(q '[:find ?owner (count ?pet)
-     :where
-     [?pet :owners _ ?owner]]
-   pets-db)
-;;=> (["Peirce" 2] ["Frege" 1] ["De Morgan" 1])
+(->> (q '[:find ?owner (count ?pet)
+          :where
+          [?pet :owners _ ?owner]]
+       pets-db)
+     (into {}))
+;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
 
 ;; Create another set of relations, this time prefixing each with the path
 ;; itself. This is useful for updating structures with update-in based on query
@@ -122,113 +121,70 @@ However, the set-of-tuples structure has its own special affordance: it can be
 viewed as set of 2-place [relations][3].
 
 The advantage of a relational view of the structure is that it can be
-queried directly with a popular dialect of Datalog.
+queried directly easily with a popular dialect of Datalog.
 
 For example, the following Datomic-flavored Datalog query finds the values for
 `?v` in all of the relations starting with `:color`:
 
 ```clojure
-[:find ?v
- :where [:color ?v]]
+[:find ?v :where [:color ?v]]
 ```
-
-### Cardinality of associations
-
-In a map, there can only be one association between a key and a value, so the
-above query will only ever return one value for `?v`.  In other applications of
-Datalog, such as against a Datomic database, a similar query might yield multiple
-values for `?v` if the *cardinality* of the `:color` relation is "many".
-
-### Deep structures
-
-Any k-deep associative structure can be represented as a set of relations
-varying in arity between 2 and k.  A path into a nested structure corresponds to
-a relation in a set.
-
-### Associativity of sets
-
-It's not especially important for the purposes of this library that sets be
-queryable. Most of the time I need to query data from a [JSON][5] source, and JSON
-does not support sets. However, I learned while developing the
-library that sets like `#{:a :b :c}` can be viewed as sets of 1-place relations
-like these:
-
-```clojure
-#{[:a] [:b] [:c]}
-```
-
-Under this scheme, the map `{:xs #{1 2 3}}` is represented as this set of
-2-place relations:
-
-```clojure
-#{[:xs 1] 
-  [:xs 2]
-  [:xs 3]}
-```
-
-A variant of `assoc` can then be defined that can operate on sets:
-
-```clojure
-(defn assoc* 
-  [coll k v]
-  "Like assoc but works also on sets."
-  (if (set? coll)
-    (conj (disj coll k) v)
-    (assoc coll k v)))
-```
-
-A variant of `update-in` can be defined that works on structures
-possibly containing sets:
-
-```clojure
-(defn update-in*
-  "Like update-in but works also on sets."
-  ([m [k & ks] f & args]
-   (if ks
-     (assoc* m k (apply update-in* (get m k) ks f args))
-     (assoc* m k (apply f (get m k) args)))))
-```
-
-Combining our scheme for representing paths into sets and `update-in*`, we can
-now (arguably meaningfully?) "update" values into structures containing sets:
-
-```clojure
-(update-in* {:xs #{1 2 3}} [:xs 3] inc) ;=> {:xs #{1 2 4}}
-```
-
-> Note: Clojure already supports `get` on sets: `(get #{1 2 3} 2)` is `2`.
-
-Relations representing paths to sets can be thought of as having "many"
-cardinality.
 
 ## Differences from spectre
 
-[spectre][6] is another library that was also created with the goal making it
+[spectre][4] is another library that was also created with the goal making it
 easier to work with nested structures in Clojure.
 
 Unlike spectre, intension supplies no means for updating structures — only
 querying them using a (separate) Datalog implementation.  Also, it's only
 possible to query maps and vectors currently.
 
-## Ideas for improvement
+## Notes and ideas for improvement
 
-It would be useful to support "wildcards."  Sometimes you don't know how deep
-the path is to some key/value in the structure you're interested in - you just
-know you're interested in the shallowest value for `:name` or whatever.
+### Works great with amazonica
+
+[amazonica][5] is a Clojure wrapper around many Amazon Web Services APIs that
+returns results as vector/maps. These return values are amenable to intension,
+making it possible to query AWS API results with Datalog.
+
+### Shortcuts and conveniences
+
+It might be useful to support "wildcards."  Sometimes you don't know how deep
+the path is to some key/value in the structure you're interested in — you may just
+know you're interested in the shallowest value for `:name`.
 
 It might be good to create another function, like `make-meta-db`, that returned
 a database of convenience relations generated at some extra expense. The meta db
-might contain 3-place relations for every distinct key/value regardless of
-depth, prefixed by path. Meta data could be joined against data generated by
-`make-db` on the path value.
+might contain relations for every distinct key/value regardless of depth,
+prefixed by path. Meta data could be joined against data generated by `make-db`
+on the path value by using `q`'s ability to query multiple data sources.
+
+### Other collections
+
+Only maps and vectors are supported because:
+
+* Compositions of them are maybe the most popular kind of nested structure in the wild
+* We could easily generate paths into sequences, by indexing the same way we do
+  with vectors, but `get` isn't defined in Clojure for sequences. That means the
+  paths we generated couldn't be fed directly to Clojure's existing `get-in`.
+  We'd need to supply a variant, which would add scope. We could add access
+  protocols, but that would also add scope. Better to use this for awhile longer
+  and see what we actually want and need.
+* We can generate paths into sets but they're never in JSON - worth the extra stuff?
+  
+### Input validation
+
+We know some from a query's clauses the expectations the user has about the
+structure and size of the tuples in the set. Provided a set of clauses, we could
+do some amount of validation on input data. The more places in the clauses are
+qualified, the more validation we could do.
 
 [0]: https://en.wikipedia.org/wiki/Datalog
 [1]: http://docs.datomic.com/query.html
 [2]: https://github.com/tonsky/datascript
 [3]: https://en.wikipedia.org/wiki/Relation_(database)
-[4]: https://en.wikipedia.org/wiki/Unification_(computer_science)
-[5]: https://en.wikipedia.org/wiki/JSON
-[6]: https://github.com/nathanmarz/specter
+[4]: https://github.com/nathanmarz/specter
+[5]: https://github.com/mcohen01/amazonica
 
 ## License
 

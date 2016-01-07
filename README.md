@@ -83,9 +83,8 @@ implementations like [Datomic's own][1] or [DataScript][2].
             [(> ?age 2)]]
           pets-db2)
        (map first)))
+;;=> ([0 :age] [1 :age])
      
-;; Return a new map with every pet's age over 2 inc'd:
-
 (reduce #(update-in %1 %2 inc) pets age-paths)
 ;;=> a map in which George and Francis are now 4 and 9, respectively.
 ```

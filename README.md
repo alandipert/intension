@@ -53,7 +53,7 @@ implementations like [Datomic's own][1] or [DataScript][2].
 ;; To find each owner and how many pets each owner owns, we might write Clojure code like this:
 
 (->> (for [p pets, o (:owners p)] {o 1})
-     (apply merge-with +))
+     (reduce merge-with +))
 ;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
 
 ;; It's pretty short for this example, but I find this kind of code gets hard to
@@ -129,12 +129,12 @@ For example, the following Datomic-flavored Datalog query finds the values for
 [:find ?v :where [:color ?v]]
 ```
 
-## Differences from spectre
+## Differences from specter
 
-[spectre][4] is another library that was also created with the goal making it
+[specter][4] is another library that was also created with the goal making it
 easier to work with nested structures in Clojure.
 
-Unlike spectre, intension supplies no means for updating structures — only
+Unlike specter, intension supplies no means for updating structures — only
 querying them using a (separate) Datalog implementation.  Also, it's only
 possible to query maps and vectors currently.
 

@@ -51,7 +51,17 @@ implementations like [Datomic's own][1] or [DataScript][2].
    pets-db)
 ;;=> #{["George"] ["Francis"] ["Bob"]}
 
-;; Find each owner, and how many pets each owns:
+;; To find each owner and how many pets each owner owns, we could write Clojure code like this:
+
+(reduce
+  (fn [m pet]
+     (reduce #(update %1 %2 (fnil + 0) 1) m (get pet :owners)))
+  {}
+  pets)
+;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
+
+;; I find that code hard to follow, which is why I made this library. Here's how
+;; it could be done in Datalog:
 
 (q '[:find ?owner (count ?pet)
      :where

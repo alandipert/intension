@@ -1,4 +1,5 @@
-(ns alandipert.intension)
+(ns alandipert.intension
+  "Functions for converting nested structures into sets of tuples.")
 
 (defn paths
   "Returns the set of paths into a nested map/vector."
@@ -12,7 +13,6 @@
          (vector? x)
          (mapcat #(paths (conj parent %1) %2) (range) x)
          :else [parent])))
-
 
 (defn make-db
   "Converts a nested structure of vectors/maps into a set of tuples suitable for

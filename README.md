@@ -53,7 +53,7 @@ implementations like [Datomic's own][1] or [DataScript][2].
 ;; To find each owner and how many pets each owner owns, we might write Clojure code like this:
 
 (->> (for [p pets, o (:owners p)] {o 1})
-     (reduce merge-with +))
+     (apply merge-with +))
 ;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
 
 ;; It's pretty short for this example, but I find this kind of code gets hard to

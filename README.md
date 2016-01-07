@@ -61,7 +61,7 @@ implementations like [Datomic's own][1] or [DataScript][2].
 ;;=> {"Peirce" 2, "Frege" 1, "De Morgan" 1}
 
 ;; I find that code hard to follow, which is why I made this library. Here's how
-;; it could be done in Datalog:
+;; I would prefer to do it, with Datalog:
 
 (q '[:find ?owner (count ?pet)
      :where

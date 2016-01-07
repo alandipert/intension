@@ -15,7 +15,7 @@ DSLs on a per-application basis.
 
 This library contains a set of functions for converting associative structures
 to in-memory databases suitable for query via [Datalog][0]
-implementations such as [Datomic][1] and [DataScript][2].
+implementations like those found in [Datomic][1] and [DataScript][2].
 
 ## Usage
 

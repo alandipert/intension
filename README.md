@@ -9,13 +9,14 @@
 Clojure makes it easy and efficient to create, update, and access places within
 immutable, nested associative structures like maps-of-maps or vectors-of-maps.
 
-However, Clojure doesn't help much with **querying** these structures. As a
-result, programmers are often compelled to implement bespoke query engines and
-DSLs on a per-application basis.
+However, Clojure doesn't help much with **querying** these structures,
+particularly when there are relationships across elements within the structure.
+As a result, programmers are often compelled to implement bespoke query engines
+and DSLs on a per-application basis.
 
 This library contains a set of functions for converting associative structures
-to in-memory databases suitable for query via [Datalog][0]
-implementations like those found in [Datomic][1] and [DataScript][2].
+to in-memory databases suitable for query via Datomic-flavored [Datalog][0]
+implementations like [Datomic][1]'s own or [DataScript][2].
 
 ## Usage
 
@@ -38,17 +39,15 @@ implementations like those found in [Datomic][1] and [DataScript][2].
     :owners ["Peirce"]}])
     
 ;; Create a set of relations based on paths into the pets map. Every relation
-;; starts with the path the relation is based on, and ends with the value at
-;; that path. The elements of the path are in between. Including the path prefix
-;; is useful if you plan on updating the structure based on the query result.
+;; contains the path, followed by the value at that path.
 
-(def pets-db (make-db pets {:prefix-paths? true}))
+(def pets-db (make-db pets))
 
 ;; Find the names of all the pets:
 
 (q '[:find ?name
      :where
-     [_ _ :name ?name]]
+     [_ :name ?name]]
    pets-db)
 ;;=> #{["George"] ["Francis"] ["Bob"]}
 
@@ -56,9 +55,15 @@ implementations like those found in [Datomic][1] and [DataScript][2].
 
 (q '[:find ?owner (count ?pet)
      :where
-     [_ ?pet :owners _ ?owner]]
+     [?pet :owners _ ?owner]]
    pets-db)
 ;;=> (["Peirce" 2] ["Frege" 1] ["De Morgan" 1])
+
+;; Create another set of relations, this time prefixing each with the path
+;; itself. This is useful for updating structures with update-in based on query
+;; results.
+
+(def pets-db2 (make-db pets {:paths? true}))
 
 ;; Find the paths to every pet's age over 2:
 
@@ -67,7 +72,7 @@ implementations like those found in [Datomic][1] and [DataScript][2].
             :where
             [?path _ :age ?age]
             [(> ?age 2)]]
-          pets-db)
+          pets-db2)
        (map first)))
      
 ;; Return a new map with every pet's age over 2 inc'd:

@@ -18,12 +18,12 @@
   "Converts a nested structure of vectors/maps into a set of tuples suitable for
    query by Datalog.  Takes an optional configuration map that can contain these options:
 
-     :prefix-paths? - true by default.  Whether or not to prefix every tuple with the path.
-                      Useful for processing structures with update-in based on query results."
-  [coll & [{:keys [prefix-paths?]
-            :or   {prefix-paths? true}}]]
+     :paths? - false by default.  Whether or not to prefix every tuple with the path.
+               Useful for processing structures with update-in based on query results."
+  [coll & [{:keys [paths?]
+            :or   {paths? false}}]]
   (mapv (fn [path]
           (conj
-           (if prefix-paths? (vec (list* path path)) path)
+           (if paths? (vec (list* path path)) path)
            (get-in coll path)))
         (paths coll)))

@@ -1,6 +1,6 @@
 (set-env!
  :dependencies '[[org.clojure/clojure "1.7.0"  :scope "provided"]
-                 [adzerk/bootlaces    "0.1.10" :scope "test"]
+                 [adzerk/bootlaces    "0.1.13" :scope "test"]
                  [datascript          "0.13.3" :scope "test"]]
  :resource-paths #{"src"})
 

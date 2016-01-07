@@ -2,7 +2,7 @@
 
 [](dependency)
 ```clojure
-[alandipert/intension "1.0.0"] ;; latest release
+[alandipert/intension "1.0.0-SNAPSHOT"] ;; latest release
 ```
 [](/dependency)
 
@@ -57,7 +57,7 @@ implementations like those found in [Datomic][1] and [DataScript][2].
 (q '[:find ?owner (count ?pet)
      :where
      [_ ?pet :owners _ ?owner]]
-   pets-db))
+   pets-db)
 ;;=> (["Peirce" 2] ["Frege" 1] ["De Morgan" 1])
 
 ;; Find the paths to every pet's age over 2:
@@ -66,9 +66,9 @@ implementations like those found in [Datomic][1] and [DataScript][2].
   (->> (q '[:find ?path
             :where
             [?path _ :age ?age]
-            [(> ?age 5)]]
+            [(> ?age 2)]]
           pets-db)
-       (map first))
+       (map first)))
      
 ;; Return a new map with every pet's age over 2 inc'd:
 
@@ -133,7 +133,7 @@ a relation in a set.
 ### Associativity of sets
 
 It's not especially important for the purposes of this library that sets be
-queryable. Most of the time I need to query data from a JSON[5] source, and JSON
+queryable. Most of the time I need to query data from a [JSON][5] source, and JSON
 does not support sets. However, I learned while developing the
 library that sets like `#{:a :b :c}` can be viewed as sets of 1-place relations
 like these:

@@ -2,7 +2,7 @@
 
 [](dependency)
 ```clojure
-[alandipert/intension "1.0.0"] ;; latest release
+[alandipert/intension "1.1.0"] ;; latest release
 ```
 [](/dependency)
 

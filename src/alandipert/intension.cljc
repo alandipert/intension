@@ -16,14 +16,18 @@
 
 (defn make-db
   "Converts a nested structure of vectors/maps into a set of tuples suitable for
-   query by Datalog.  Takes an optional configuration map that can contain these options:
+   query by Datalog.  Attaches the original structure to the vector returned under the :alandipert.intension/original key.
+
+   Takes an optional configuration map that can contain these options:
 
      :paths? - false by default.  Whether or not to prefix every tuple with the path.
                Useful for processing structures with update-in based on query results."
   [coll & [{:keys [paths?]
             :or   {paths? false}}]]
-  (mapv (fn [path]
-          (conj
-           (if paths? (vec (list* path path)) path)
-           (get-in coll path)))
-        (paths coll)))
+  (with-meta
+    (mapv (fn [path]
+            (conj
+             (if paths? (vec (list* path path)) path)
+             (get-in coll path)))
+          (paths coll))
+    {::original coll}))

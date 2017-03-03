@@ -31,3 +31,7 @@
              (get-in coll path)))
           (paths coll))
     {::original coll}))
+
+(defn original
+  [db]
+  (get (meta db) ::original))
